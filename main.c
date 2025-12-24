@@ -123,7 +123,7 @@ void ParseDemo(const char *filename)
 
 		// if we added to the buffer, output it
 		if (buffer[0] != 0) {
-			printf(buffer);
+			printf("%s", buffer);
 		}
 	}
 
@@ -134,7 +134,7 @@ void ParseDemo(const char *filename)
 	fclose(fp);
 }
 
-uint32_t main(uint32_t argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i = ParseArgs(argc, argv);
 

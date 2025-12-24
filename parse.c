@@ -978,7 +978,7 @@ void ParseLayout(void)
 	}
 
 	if (options & OPT_LAYOUTS) {
-		strcat(buffer, ("Layout - %s\n", demo.layout));
+		sprintf(buffer + strlen(buffer), "Layout - %s\n", demo.layout);
 	}
 
 	if ((options & OPT_CROP) && demo.recording) {
