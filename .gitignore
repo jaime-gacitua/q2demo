@@ -1,0 +1,12 @@
+# Compiled files
+*.o
+q2demo
+
+# Demo files (large binaries)
+*.dm2
+*.mvd2
+
+# Generated outputs
+outputs/
+dump.txt
+
