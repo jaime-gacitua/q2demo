@@ -57,6 +57,26 @@
 #define MSGLEN              4
 //#define MAX_EDICTS          1024
 #define MAX_STATS           32
+
+// Player stats indices
+#define STAT_HEALTH_ICON    0
+#define STAT_HEALTH         1
+#define STAT_AMMO_ICON      2
+#define STAT_AMMO           3
+#define STAT_ARMOR_ICON     4
+#define STAT_ARMOR          5
+#define STAT_SELECTED_ICON  6
+#define STAT_PICKUP_ICON    7
+#define STAT_PICKUP_STRING  8
+#define STAT_TIMER_ICON     9
+#define STAT_TIMER          10
+#define STAT_HELPICON       11
+#define STAT_SELECTED_ITEM  12
+#define STAT_LAYOUTS        13
+#define STAT_FRAGS          14
+#define STAT_FLASHES        15
+#define STAT_CHASE          16
+#define STAT_SPECTATOR      17
 #define MAX_MAP_AREAS       256
 #define MAX_MAP_AREA_BYTES  (MAX_MAP_AREAS / 8)
 #define SVCMD_BITS          5
@@ -658,6 +678,9 @@ struct demo_s {
 	//frame_t          current_frame; // will always contain current merged gamestate
 	//frame_t          last_frame;
 	frame_t          frames[4];
+	
+	// Track last known weapon for each player (inferred from muzzleflash events)
+	int              player_weapons[MAX_CLIENTS];
 };
 
 
@@ -777,6 +800,7 @@ void       WriteDemoFile(const char *filename);
 char       *va(const char *format, ...);
 const char *MZ_Name(uint32_t idx);
 const char *Flash_Name(temp_event_t idx);
+const char *Weapon_Name(int modelindex2);
 void       InsertCredits(void);
 // writing
 void       StartRecording(char *newdemoname);

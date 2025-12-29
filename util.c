@@ -183,6 +183,40 @@ const char *Flash_Name(temp_event_t idx) {
 }
 
 
+const char *Weapon_Name(int modelindex2) {
+	extern struct demo_s demo;
+	
+	if (modelindex2 == 0) {
+		return "none";
+	}
+	
+	// Look up the configstring for this model index
+	if (modelindex2 >= 0 && modelindex2 < MAX_CONFIGSTRINGS) {
+		const char *model = demo.configstrings[modelindex2].string;
+		if (model && model[0]) {
+			// Extract weapon name from model path (e.g., "#w_railgun.md2" -> "railgun")
+			const char *weapon = strrchr(model, '/');
+			if (!weapon) weapon = model;
+			else weapon++;
+			
+			// Skip '#' and 'w_' or 'a_' prefix
+			if (*weapon == '#') weapon++;
+			if (*weapon == 'w' && *(weapon+1) == '_') weapon += 2;
+			if (*weapon == 'a' && *(weapon+1) == '_') weapon += 2;
+			
+			// Remove .md2 extension
+			static char weapon_name[64];
+			strncpy(weapon_name, weapon, sizeof(weapon_name) - 1);
+			weapon_name[sizeof(weapon_name) - 1] = '\0';
+			char *ext = strstr(weapon_name, ".md2");
+			if (ext) *ext = '\0';
+			
+			return weapon_name;
+		}
+	}
+	return "unknown";
+}
+
 const vec3_t bytedirs[NUMVERTEXNORMALS] = {
     {-0.525731, 0.000000, 0.850651},
     {-0.442863, 0.238856, 0.864188},

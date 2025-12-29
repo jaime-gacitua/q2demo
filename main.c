@@ -93,6 +93,11 @@ void ParseDemo(const char *filename)
 	}
 
 	memset(&demo, 0, sizeof(struct demo_s));
+	
+	// Initialize player weapons to -1 (unknown)
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		demo.player_weapons[i] = -1;
+	}
 
 	// save for later
 	demo.filename = (void *) filename;

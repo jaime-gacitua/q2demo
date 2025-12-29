@@ -1,4 +1,5 @@
 #include "demo.h"
+#include <math.h>
 
 int ParseArgs(uint32_t argc, char **argv)
 {
@@ -381,7 +382,16 @@ void ParsePlayerstate(player_state_t *to, player_state_t *from)
     MSG_PackPlayer(&to_p, to);
 
     if (options & OPT_VERBOSE) {
-    	strcat(buffer, "PlayerState\n");
+    	// Calculate velocity magnitude from velocity vector
+    	float vel_x = SHORT2COORD(to->pmove.velocity[0]);
+    	float vel_y = SHORT2COORD(to->pmove.velocity[1]);
+    	float vel_z = SHORT2COORD(to->pmove.velocity[2]);
+    	float velocity = sqrt(vel_x * vel_x + vel_y * vel_y + vel_z * vel_z);
+    	
+    	strcat(buffer, va("PlayerState - Health: %d, Armor: %d, Velocity: %.1f\n", 
+    		to->stats[STAT_HEALTH], 
+    		to->stats[STAT_ARMOR],
+    		velocity));
     }
 
     if ((options & OPT_CROP) && demo.recording) {
@@ -432,6 +442,59 @@ void ParsePacketEntities(frame_t *to_frame, frame_t *from_frame)
 
 	if (options & OPT_VERBOSE) {
 		strcat(buffer, "\n");
+		
+		// Output player entity information (position, weapon, name)
+		int max_clients = atoi(demo.configstrings[CS_MAXCLIENTS].string);
+		if (max_clients <= 0) max_clients = 16; // default
+		
+		for (i = 1; i <= max_clients && i < MAX_EDICTS; i++) {
+			entity_state_t *ent = &to_frame->edicts[i];
+			if (ent->number == i && ent->modelindex > 0) {
+				// This is a player entity - get name from configstring
+				const char *player_skin = demo.configstrings[CS_PLAYERSKINS + i].string;
+				char player_name[64] = "Unknown";
+				
+				if (player_skin && player_skin[0]) {
+					// Player skin format is usually "name/skin" or just "name"
+					const char *slash = strchr(player_skin, '/');
+					if (slash) {
+						strncpy(player_name, player_skin, slash - player_skin);
+						player_name[slash - player_skin] = '\0';
+					} else {
+						strncpy(player_name, player_skin, sizeof(player_name) - 1);
+						player_name[sizeof(player_name) - 1] = '\0';
+					}
+				}
+				
+				const char *weapon = "unknown";
+				
+				// First, try to get weapon from tracked muzzleflash events
+				if (i < MAX_CLIENTS && demo.player_weapons[i] >= 0) {
+					weapon = MZ_Name(demo.player_weapons[i]);
+				}
+				// Fallback: try modelindex2 (weapon models, but may not always be set)
+				else if (ent->modelindex2 > 0 && ent->modelindex2 < 255) {
+					weapon = Weapon_Name(ent->modelindex2);
+					if (strcmp(weapon, "unknown") == 0) {
+						// Try to get weapon name from configstring
+						if (ent->modelindex2 < MAX_CONFIGSTRINGS) {
+							const char *model = demo.configstrings[ent->modelindex2].string;
+							if (model && model[0]) {
+								weapon = model; // Show full model path if we can't parse it
+							}
+						}
+					}
+				} else {
+					weapon = "none";
+				}
+				
+				strcat(buffer, va("Player [%d] %s - Weapon: %s, Pos: (%.1f, %.1f, %.1f)\n",
+					i, player_name, weapon,
+					ent->origin[0],
+					ent->origin[1],
+					ent->origin[2]));
+			}
+		}
 	}
 
 	if ((options & OPT_CROP) && demo.recording) {
@@ -699,9 +762,14 @@ void ParseMuzzleFlash(void)
 
 	ent = MSG_ReadShort();
 	effect = MSG_ReadByte();
+	
+	// Track weapon for this player entity (if it's a player)
+	if (ent > 0 && ent < MAX_CLIENTS) {
+		demo.player_weapons[ent] = effect;
+	}
 
 	if (options & OPT_VERBOSE) {
-		strcat(buffer, va("Muzzleflash - (%d) %s\n", effect, MZ_Name(effect)));
+		strcat(buffer, va("Muzzleflash - Entity: %d, Weapon: (%d) %s\n", ent, effect, MZ_Name(effect)));
 	}
 
 	if ((options & OPT_CROP) && demo.recording) {

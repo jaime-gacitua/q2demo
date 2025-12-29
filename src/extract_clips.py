@@ -21,14 +21,22 @@ def main():
     
     # Derive paths from demo name
     project_root = Path(__file__).parent.parent
-    input_video = project_root / "inputs" / f"{demo_name}.mp4"
+    inputs_dir = project_root / "inputs"
     input_csv = project_root / "outputs" / f"{demo_name}-rail-kills.csv"
     clips_dir = project_root / "outputs" / f"{demo_name}-clips"
     output_video = project_root / "outputs" / f"{demo_name}-highlight.mp4"
 
-    # Validate inputs exist
-    if not input_video.exists():
-        print(f"Error: Input video not found: {input_video}")
+    # Find input video (support multiple formats)
+    input_video = None
+    for ext in ["mp4", "mkv", "avi", "mov", "webm"]:
+        candidate = inputs_dir / f"{demo_name}.{ext}"
+        if candidate.exists():
+            input_video = candidate
+            break
+    
+    if not input_video:
+        print(f"Error: No video found for {demo_name} in {inputs_dir}")
+        print("Supported formats: mp4, mkv, avi, mov, webm")
         sys.exit(1)
     if not input_csv.exists():
         print(f"Error: Input CSV not found: {input_csv}")
